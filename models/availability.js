@@ -21,11 +21,11 @@ export default (sequelize, DataTypes) => {
       allowNull: false 
     },
     startTime: { 
-      type: DataTypes.TIME, 
+      type: DataTypes.DATE, 
       allowNull: false 
     },
     endTime: { 
-      type: DataTypes.TIME, 
+      type: DataTypes.DATE, 
       allowNull: false 
     },
   }, {
