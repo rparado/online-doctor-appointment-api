@@ -17,6 +17,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
   logging: false
 });
 
+// Initialize models
 const User = userModel(sequelize, DataTypes);
 const Doctor = doctorModel(sequelize, DataTypes);
 const Specialization = specializationModel(sequelize, DataTypes);
@@ -26,16 +27,26 @@ const Availability = availabilityModel(sequelize, DataTypes);
 const MedicalRecord = medicalRecordModel(sequelize, DataTypes);
 const UserProfile = userProfileModel(sequelize, DataTypes);
 
+// Define associations
 User.hasOne(Doctor, { foreignKey: 'userId' });
 Doctor.belongsTo(User, { foreignKey: 'userId' });
+
 Doctor.belongsTo(Specialization, { foreignKey: 'specializationId' });
+
+// 🔹 **Fix: Add Doctor ↔ Availability Relationship**
+Doctor.hasMany(Availability, { foreignKey: 'doctorId' }); // One Doctor has many Availabilities
+Availability.belongsTo(Doctor, { foreignKey: 'doctorId' }); // Each Availability belongs to one Doctor
+
 Appointment.belongsTo(Doctor, { foreignKey: 'doctorId' });
 Appointment.belongsTo(User, { foreignKey: 'patientId' });
+
 Payment.belongsTo(Appointment, { foreignKey: 'appointmentId' });
+
 MedicalRecord.belongsTo(User, { foreignKey: 'patientId' });
 MedicalRecord.belongsTo(Doctor, { foreignKey: 'doctorId' });
+
 User.hasOne(UserProfile, { foreignKey: 'userId' });
 UserProfile.belongsTo(User, { foreignKey: 'userId' });
 
-
 export { sequelize, User, UserProfile, Doctor, Specialization, Appointment, Payment, Availability, MedicalRecord };
+export default { sequelize, User, UserProfile, Doctor, Specialization, Appointment, Payment, Availability, MedicalRecord };

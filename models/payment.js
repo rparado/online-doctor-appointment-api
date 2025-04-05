@@ -11,7 +11,6 @@ export default (sequelize, DataTypes) => {
       transactionId: { type: DataTypes.STRING},
     }, {
       timestamps: true,
-      underscored: true
     });
   };
   
