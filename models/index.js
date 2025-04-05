@@ -8,6 +8,7 @@ import paymentModel from './payment.js';
 import availabilityModel from './availability.js';
 import medicalRecordModel from './medical_record.js';
 import userProfileModel from './user_profile.js';
+import patientModel from './patient.js';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ const Payment = paymentModel(sequelize, DataTypes);
 const Availability = availabilityModel(sequelize, DataTypes);
 const MedicalRecord = medicalRecordModel(sequelize, DataTypes);
 const UserProfile = userProfileModel(sequelize, DataTypes);
+const Patient = patientModel(sequelize, DataTypes);
 
 // Define associations
 User.hasOne(Doctor, { foreignKey: 'userId' });
@@ -48,5 +50,6 @@ MedicalRecord.belongsTo(Doctor, { foreignKey: 'doctorId' });
 User.hasOne(UserProfile, { foreignKey: 'userId' });
 UserProfile.belongsTo(User, { foreignKey: 'userId' });
 
-export { sequelize, User, UserProfile, Doctor, Specialization, Appointment, Payment, Availability, MedicalRecord };
-export default { sequelize, User, UserProfile, Doctor, Specialization, Appointment, Payment, Availability, MedicalRecord };
+
+export { sequelize, User, UserProfile, Doctor, Specialization, Appointment, Payment, Availability, MedicalRecord, Patient };
+export default { sequelize, User, UserProfile, Doctor, Specialization, Appointment, Payment, Availability, MedicalRecord, Patient };

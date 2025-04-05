@@ -1,4 +1,4 @@
-import { Appointment } from '../models';
+import { Appointment } from '../models/index.js';
 import { Op } from 'sequelize';
 
 /**

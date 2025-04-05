@@ -1,7 +1,4 @@
-// models/appointment.js
-import { DataTypes } from 'sequelize';
-
-export default (sequelize) => {
+export default (sequelize, DataTypes) => {
   const Appointment = sequelize.define('Appointment', {
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
     doctorId: { 

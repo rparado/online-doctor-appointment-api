@@ -1,4 +1,4 @@
-import { MedicalRecord, Patient } from '../models';
+import { MedicalRecord, Patient } from '../models/index.js';
 import multer from 'multer';
 import path from 'path';
 
