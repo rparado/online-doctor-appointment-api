@@ -14,6 +14,7 @@ import medicalRecordRoutes from './routes/medical_records.js';
 import paymentRoutes from './routes/payments.js';
 import userProfileRoutes from './routes/user_profile.js';
 import { Doctor, UserProfile, User } from './models/index.js';
+import userProfileRoutes from './routes/userProfileRoutes.js';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/availability', availabilityRoutes);
 app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/user-profiles', userProfileRoutes);
+app.use('/api/profile', userProfileRoutes);
 
 const PORT = process.env.PORT || 3000;
 // app.get('/debug-doctors', async (req, res) => {
