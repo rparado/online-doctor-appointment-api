@@ -13,7 +13,11 @@ export default (sequelize, DataTypes) => {
     role: {
       type: DataTypes.ENUM('admin', 'doctor', 'patient'),
       defaultValue: 'patient',
-    }
+    },
+    isProfileUpdated: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
   });
   User.beforeCreate(async (user) => {
     user.password = await bcrypt.hash(user.password, 10);

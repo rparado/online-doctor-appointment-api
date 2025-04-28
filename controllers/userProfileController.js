@@ -2,8 +2,8 @@ import { UserProfile, User } from '../models/index.js';
 
 export const updateUserProfile = async (req, res) => {
   try {
-    const userId = req.userId;
-    const { firstName, lastName, phone, address, birthDate, gender, avatar, isProfileUpdated } = req.body;
+    const userId = req.user;
+    const { firstName, lastName, phone, address, birthDate, gender, avatar } = req.body;
 
     const userProfile = await UserProfile.findOne({ where: { userId } });
 
@@ -22,15 +22,20 @@ export const updateUserProfile = async (req, res) => {
       address,
       birthDate,
       gender,
-      avatar,
-      isProfileUpdated
+      avatar
     });
 
     // Also update user status
-    await User.update(
-      { isProfileUpdated: true },
-      { where: { id: userId } }
-    );
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        status: "failed",
+        message: 'User not found'
+      });
+    }
+    user.isProfileUpdated = 1;
+    await user.save();
 
     res.status(200).json({
       status: 'success',
@@ -44,10 +49,9 @@ export const updateUserProfile = async (req, res) => {
           address: userProfile.address,
           birthDate: userProfile.birthDate,
           gender: userProfile.gender,
-          avatar: userProfile.avatar,
-          updatedAt: userProfile.updatedAt,
-          isProfileUpdated: userProfile.isProfileUpdated
-        }
+          avatar: userProfile.avatar
+        },
+        user
       }
     });
 

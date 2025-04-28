@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/index.js';
 
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // User Registration
@@ -10,22 +11,40 @@ export const registerUser = async (req, res) => {
     const { email, password, role } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+      return res.status(400).json({ status: 'failed', message: 'Email and password are required' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    console.log('Hashed Password:', hashedPassword);
-    
+    const existingUser = await User.findOne({ where: { email } });
+
+    if (existingUser) {
+      return res.status(400).json({ status: 'failed', message: 'Email already registered' });
+    }
+
     const user = await User.create({
       email,
-      password: hashedPassword,
+      password,
       role: role || 'patient',
+      isProfileUpdated: 0
     });
 
-    return res.status(201).json({ message: 'User registered successfully', user });
+    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+
+    await user.update({ token });
+
+    return res.status(201).json({
+      status: 'success',
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isProfileUpdated: 0
+      },
+    });
   } catch (error) {
-    console.log('Error in registerUser:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error in registerUser:', error);
+    return res.status(500).json({ status: 'failed', message: 'Server error', error: error.message });
   }
 };
 
@@ -35,35 +54,43 @@ export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+      return res.status(400).json({ status: 'failed', message: 'Email and password required' });
     }
 
-    const user = await User.findOne({ where: { email } });
+    // Trim input
+    const emailTrimmed = email.trim();
+    const passwordTrimmed = password.trim();
+
+    const user = await User.findOne({ where: { email: emailTrimmed } });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ status: 'failed', message: 'User not found' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(passwordTrimmed, user.password);
 
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ status: 'failed', message: 'Invalid email or password' });
     }
 
-    // Generate JWT Token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '1h' }
-    );
+    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
 
-    // Save token to the database
-    user.token = token;
-    await user.save();
+    await user.update({ token });
 
-    return res.status(200).json({ message: 'Login successful', token });
+    return res.status(200).json({
+      status: 'success',
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isProfileUpdated: user.isProfileUpdated
+      },
+    });
+
   } catch (error) {
-    console.log('Error in loginUser:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error in loginUser:', error);
+    return res.status(500).json({ status: 'failed', message: 'Server error', error: error.message });
   }
 };

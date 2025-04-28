@@ -1,20 +1,22 @@
 import jwt from 'jsonwebtoken';
 
-export const authenticateToken = (req, res, next) => {
+import { User } from '../models/index.js';
+
+const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
-  // Check if Authorization header is present and has Bearer token
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Access Denied: No token provided' });
+  if (!token) {
+    return res.status(401).json({ status: 'failed', message: 'Access denied. No token provided.' });
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Store user data from token
-    next();
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next()
   } catch (error) {
-    return res.status(403).json({ message: 'Invalid or expired token' });
+    return res.status(403).json({ status: 'failed', message: 'Invalid or expired token.' });
   }
 };
+
+export { authenticateToken };
