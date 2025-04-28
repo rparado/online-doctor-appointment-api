@@ -14,6 +14,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM('admin', 'doctor', 'patient'),
       defaultValue: 'patient',
     },
+    token: {  
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     isProfileUpdated: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
