@@ -1,29 +1,40 @@
+import { DataTypes, Sequelize } from 'sequelize';
+
 export default (sequelize, DataTypes) => {
   const Appointment = sequelize.define('Appointment', {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    doctorId: { 
-      type: DataTypes.INTEGER, 
-      allowNull: false, 
-      references: { model: 'Doctors', key: 'id' } 
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true
     },
-    patientId: { 
-      type: DataTypes.INTEGER, 
-      allowNull: false, 
-      references: { model: 'Users', key: 'id' } 
+    doctorId: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
-    appointmentDate: { type: DataTypes.DATEONLY, allowNull: false },
-    queue_number: { type: DataTypes.INTEGER, allowNull: false },
-    status: { 
-      type: DataTypes.ENUM('pending', 'ongoing', 'completed'), 
-      defaultValue: 'pending' 
+    patientId: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
-  }, {
-    timestamps: true,
+    appointmentDate: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    queueNumber: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    status: {
+      type: DataTypes.STRING,
+      defaultValue: 'pending'
+    }
   });
-  Appointment.associate = (models) => {
-    Appointment.belongsTo(models.User, { foreignKey: 'patientId' });
-    Appointment.belongsTo(models.Doctor, { foreignKey: 'doctorId' });
+
+
+  (Appointment).associate = (models) => {
+    Appointment.belongsTo(models.User, { as: 'doctor', foreignKey: 'doctorId' });
+    Appointment.belongsTo(models.User, { as: 'patient', foreignKey: 'patientId' });
     Appointment.hasOne(models.MedicalRecord, { foreignKey: 'appointmentId' });
   };
+
   return Appointment;
 };
