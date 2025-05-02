@@ -1,11 +1,9 @@
 import express from 'express';
-import { Doctor } from '../models/index.js';
+import { getAllDoctors, getDoctorDetailById } from '../controllers/doctorsController.js';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
-  const doctors = await Doctor.findAll();
-  res.json(doctors);
-});
+router.get('/', getAllDoctors);
+router.get('/:id', getDoctorDetailById);
 
 export default router;

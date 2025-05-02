@@ -34,7 +34,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/medical-records', medicalRecordRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api/user-profiles', userProfileRoutes);
+//app.use('/api/user-profiles', userProfileRoutes);
 app.use('/api/profile', userProfileRoutes);
 
 const PORT = process.env.PORT || 3000;

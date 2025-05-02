@@ -4,6 +4,7 @@ export default (sequelize, DataTypes) => {
     userId: { type: DataTypes.INTEGER, allowNull: false },
     specializationId: { type: DataTypes.INTEGER, allowNull: false },
     fee: { type: DataTypes.FLOAT, allowNull: false },
+    biography: { type: DataTypes.TEXT, allowNull: true },
     archived: { type: DataTypes.BOOLEAN, defaultValue: false },
   }, {
     timestamps: true,

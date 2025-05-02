@@ -1,55 +1,67 @@
 import { UserProfile, User } from '../models/index.js';
-import { calculateAge } from '../utils/calculateAge.js';
+
 export const updateUserProfile = async (req, res) => {
+  const { userId } = req.params;
+  const {
+    firstName,
+    middleName,
+    lastName,
+    birthDate,
+    age,
+    phoneNumber,
+    avatar,
+    address,
+    gender
+  } = req.body;
+
   try {
-    const userId = req.user?.id || req.body.userId; // Adjust based on your auth
-    const {
-      firstName,
-      middleName,
-      lastName,
-      birthDate,
-      phoneNumber,
-      address,
-      gender
-    } = req.body;
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ status: 'failed', message: 'User not found' });
 
-    const avatar = req.file ? req.file.filename : undefined;
+    const avatarFilename = req.file ? req.file.filename : null;
 
-    const age = birthDate ? calculateAge(birthDate) : null;
-
-    const profileData = {
-      firstName,
-      middleName,
-      lastName,
-      birthDate,
-      age,
-      phoneNumber,
-      address,
-      gender
-    };
-
-    if (avatar) profileData.avatar = avatar;
-
-    // Update or create UserProfile
     const [profile, created] = await UserProfile.findOrCreate({
       where: { userId },
-      defaults: { ...profileData, userId }
+      defaults: {
+        firstName,
+        middleName,
+        lastName,
+        birthDate,
+        age,
+        phoneNumber,
+        avatar: avatarFilename,
+        address,
+        gender
+      }
     });
 
     if (!created) {
-      await profile.update(profileData);
+      await profile.update({
+        firstName,
+        middleName,
+        lastName,
+        birthDate,
+        age,
+        phoneNumber,
+        ...(avatarFilename && { avatar: avatarFilename }),
+        address,
+        gender
+      });
     }
 
-    // Set isProfileUpdated = 1
-    await User.update({ isProfileUpdated: 1 }, { where: { id: userId } });
+    await user.update({ isProfileUpdated: 1 });
 
-    return res.status(200).json({
+    return res.json({
       status: 'success',
       message: 'Profile updated successfully',
-      data: { ...profile.toJSON(), avatarUrl: `/uploads/${avatar}` }
+      profile
     });
-  } catch (err) {
-    console.error('Profile update error:', err);
-    return res.status(500).json({ status: 'failed', message: 'Server error', error: err.message });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return res.status(500).json({
+      status: 'failed',
+      message: 'Server error',
+      error: error.message
+    });
   }
 };

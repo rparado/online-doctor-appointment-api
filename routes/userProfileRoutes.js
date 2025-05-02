@@ -5,6 +5,6 @@ import upload from '../middlewares/upload.js';
 
 const router = express.Router();
 
-router.put('/user/profile', upload.single('avatar'), authenticateToken, updateUserProfile);
+router.put('/:userId/update',  authenticateToken, upload.single('avatar'), updateUserProfile);
 
 export default router;

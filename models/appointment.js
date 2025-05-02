@@ -11,8 +11,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false, 
       references: { model: 'Users', key: 'id' } 
     },
-    date: { type: DataTypes.DATE, allowNull: false },
-    time: { type: DataTypes.TIME, allowNull: false },
+    appointmentDate: { type: DataTypes.DATEONLY, allowNull: false },
     queue_number: { type: DataTypes.INTEGER, allowNull: false },
     status: { 
       type: DataTypes.ENUM('pending', 'ongoing', 'completed'), 
@@ -21,6 +20,10 @@ export default (sequelize, DataTypes) => {
   }, {
     timestamps: true,
   });
-
+  Appointment.associate = (models) => {
+    Appointment.belongsTo(models.User, { foreignKey: 'patientId' });
+    Appointment.belongsTo(models.Doctor, { foreignKey: 'doctorId' });
+    Appointment.hasOne(models.MedicalRecord, { foreignKey: 'appointmentId' });
+  };
   return Appointment;
 };

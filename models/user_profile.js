@@ -42,7 +42,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
     avatar: {
-      type: DataTypes.STRING, // store image URL or file path
+      type: DataTypes.STRING,
       allowNull: true,
     },
     address: {
