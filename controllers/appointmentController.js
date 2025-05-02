@@ -1,110 +1,151 @@
-import { Appointment } from '../models/index.js';
+import { Appointment, Availability, MedicalRecord } from '../models/index.js';
 import { Op } from 'sequelize';
-
-/**
- * Book an appointment for a doctor.
- */
+// POST /api/appointments
+// Book an appointment
 export const bookAppointment = async (req, res) => {
   try {
-    const { doctorId, patientId, appointmentDate } = req.body;
+    const { doctorId, patientId, appointmentDate, timeSlot } = req.body;
 
-    if (!doctorId || !patientId || !appointmentDate) {
-      return res.status(400).json({ message: "All fields are required: doctorId, patientId, appointmentDate." });
-    }
-
-    // 1️⃣ Check if doctor has reached the daily limit (100 patients)
+    // Count existing appointments for queue number
     const appointmentCount = await Appointment.count({
-      where: {
-        doctorId,
-        appointmentDate,
-        status: { [Op.not]: 'canceled' },
-      },
+      where: { doctorId, appointmentDate },
     });
 
-    if (appointmentCount >= 100) {
-      return res.status(400).json({ message: "Doctor has reached the maximum daily appointments." });
-    }
-
-    // 2️⃣ Book the appointment
     const newAppointment = await Appointment.create({
       doctorId,
       patientId,
       appointmentDate,
-      status: 'pending',
+      timeSlot,
+      queueNumber: appointmentCount + 1,
+      status: 'Scheduled',
     });
 
-    return res.status(201).json({ message: "Appointment booked successfully!", data: newAppointment });
+    res.status(201).json({ status: 'success', data: newAppointment });
   } catch (error) {
-    console.error("Error booking appointment:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };
 
-/**
- * Get all appointments for a specific doctor on a specific date.
- */
+// Get all appointments
+export const getAllAppointments = async (req, res) => {
+  try {
+    const appointments = await Appointment.findAll({
+      include: [
+        { model: User, as: 'patient', attributes: ['firstName', 'lastName'] },
+        { model: Doctor, include: ['Specialization'] },
+      ],
+    });
+    res.status(200).json({ status: 'success', data: appointments });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+
+// Get appointment by ID
+export const getAppointmentById = async (req, res) => {
+  try {
+    const appointment = await Appointment.findByPk(req.params.id, {
+      include: [
+        { model: User, as: 'patient', attributes: ['firstName', 'lastName'] },
+        { model: Doctor, include: ['Specialization'] },
+      ],
+    });
+    if (!appointment) {
+      return res.status(404).json({ status: 'error', message: 'Appointment not found' });
+    }
+    res.status(200).json({ status: 'success', data: appointment });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+
+// Get appointments for a doctor on a specific date
 export const getDoctorAppointments = async (req, res) => {
   try {
     const { doctorId, appointmentDate } = req.params;
 
-    if (!doctorId || !appointmentDate) {
-      return res.status(400).json({ message: "Doctor ID and appointment date are required." });
-    }
-
-    // Fetch appointments for the doctor on the given date
     const appointments = await Appointment.findAll({
       where: {
         doctorId,
         appointmentDate,
-        status: { [Op.not]: 'canceled' }, // Exclude canceled appointments
       },
-      include: [{ association: 'patient', attributes: ['id', 'email'] }], // Include patient details
+      order: [['timeSlot', 'ASC']],
     });
 
-    return res.status(200).json({ data: appointments });
+    res.json({ status: 'success', data: appointments });
   } catch (error) {
-    console.error("Error fetching doctor appointments:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };
+// PUT /api/appointments/:id
+// Update an appointment
+export const updateAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const { appointmentDate, timeSlot, status } = req.body;
 
-/**
- * Cancel an appointment.
- */
+    const appointment = await Appointment.findByPk(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({ status: 'error', message: 'Appointment not found' });
+    }
+
+    appointment.appointmentDate = appointmentDate ?? appointment.appointmentDate;
+    appointment.timeSlot = timeSlot ?? appointment.timeSlot;
+    appointment.status = status ?? appointment.status;
+
+    await appointment.save();
+
+    res.json({ status: 'success', message: 'Appointment updated', data: appointment });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+// DELETE /api/appointments/:id
+// Cancel an appointment
 export const cancelAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.params;
 
     const appointment = await Appointment.findByPk(appointmentId);
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found." });
+      return res.status(404).json({ status: 'error', message: 'Appointment not found' });
     }
 
-    // Update status to 'canceled'
-    appointment.status = 'canceled';
+    appointment.status = 'Cancelled';
     await appointment.save();
 
-    return res.status(200).json({ message: "Appointment canceled successfully!" });
+    res.json({ status: 'success', message: 'Appointment cancelled' });
   } catch (error) {
-    console.error("Error canceling appointment:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };
-
-/**
- * Get available slots for a doctor.
- */
+// GET /api/appointments/available-slots/:doctorId?date=YYYY-MM-DD
+// Get available slots for a doctor on a specific date
 export const getAvailableSlots = async (req, res) => {
   try {
     const { doctorId, appointmentDate } = req.params;
 
-    const booked = await Appointment.count({
-      where: { doctorId, appointmentDate, status: { [Op.not]: 'canceled' } },
+    const availabilities = await DoctorAvailability.findAll({
+      where: {
+        doctorId,
+        day: new Date(appointmentDate).toLocaleString('en-US', { weekday: 'long' }),
+      },
     });
 
-    return res.status(200).json({ availableSlots: 100 - booked });
+    const appointments = await Appointment.findAll({
+      where: {
+        doctorId,
+        appointmentDate,
+      },
+    });
+
+    const bookedSlots = appointments.map((a) => a.timeSlot);
+    const availableSlots = availabilities.filter(
+      (slot) => !bookedSlots.includes(slot.startTime)
+    );
+
+    res.json({ status: 'success', data: availableSlots });
   } catch (error) {
-    console.error("Error fetching available slots:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };

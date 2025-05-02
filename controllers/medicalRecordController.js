@@ -1,71 +1,123 @@
-import { MedicalRecord, Patient } from '../models/index.js';
-import multer from 'multer';
+import {User, Doctor, MedicalRecord} from '../models/index.js';
+import { Op } from 'sequelize';
+import fs from 'fs';
 import path from 'path';
 
-// Configure Multer storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Uploads will be stored in the 'uploads' directory
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)); // Rename file with timestamp
-  },
-});
-
-// Multer middleware
-export const upload = multer({ storage: storage });
-
-/**
- * Add a new medical record with optional file upload.
- */
-export const addMedicalRecord = async (req, res) => {
+// Create a new medical record
+export const createMedicalRecord = async (req, res) => {
   try {
-    const { patientId, doctorId, diagnosis, treatment, notes, date } = req.body;
-    const file = req.file; // Multer stores the uploaded file here
+    const { patientId, doctorId, diagnosis, prescription, notes } = req.body;
+    let fileUrl = null;
 
-    if (!patientId || !doctorId || !diagnosis || !treatment || !date) {
-      return res.status(400).json({ message: "Missing required fields." });
+    if (req.file) {
+      fileUrl = req.file.filename; // Assuming filename is saved via multer
     }
 
-    // Save file path if a file is uploaded
-    const filePath = file ? `/uploads/${file.filename}` : null;
-
-    const newRecord = await MedicalRecord.create({
+    const record = await MedicalRecord.create({
       patientId,
       doctorId,
       diagnosis,
-      treatment,
+      prescription,
       notes,
-      date,
-      filePath,
+      fileUrl,
     });
 
-    return res.status(201).json({ message: "Medical record added successfully!", data: newRecord });
+    res.status(201).json({ status: 'success', data: record });
   } catch (error) {
-    console.error("Error adding medical record:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };
 
-/**
- * Get all medical records for a specific patient.
- */
-export const getPatientMedicalRecords = async (req, res) => {
+// Get all medical records
+export const getAllMedicalRecords = async (req, res) => {
+  try {
+    const records = await MedicalRecord.findAll({
+      include: [
+        { model: User, as: 'patient', attributes: ['firstName', 'lastName'] },
+        { model: Doctor, as: 'doctor', attributes: ['firstName', 'lastName'] },
+      ],
+    });
+    res.status(200).json({ status: 'success', data: records });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+
+// Get medical record by ID
+export const getMedicalRecordById = async (req, res) => {
+  try {
+    const record = await MedicalRecord.findByPk(req.params.id, {
+      include: [
+        { model: User, as: 'patient', attributes: ['firstName', 'lastName'] },
+        { model: Doctor, as: 'doctor', attributes: ['firstName', 'lastName'] },
+      ],
+    });
+
+    if (!record) {
+      return res.status(404).json({ status: 'error', message: 'Medical record not found' });
+    }
+
+    res.status(200).json({ status: 'success', data: record });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+
+// Update a medical record
+export const updateMedicalRecord = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { diagnosis, prescription, notes } = req.body;
+    let updateData = { diagnosis, prescription, notes };
+
+    if (req.file) {
+      const record = await MedicalRecord.findByPk(id);
+      if (record && record.fileUrl) {
+        const oldPath = path.join('uploads', record.fileUrl);
+        fs.existsSync(oldPath) && fs.unlinkSync(oldPath);
+      }
+      updateData.fileUrl = req.file.filename;
+    }
+
+    await MedicalRecord.update(updateData, { where: { id } });
+
+    res.status(200).json({ status: 'success', message: 'Medical record updated' });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+
+// Delete a medical record
+export const deleteMedicalRecord = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const record = await MedicalRecord.findByPk(id);
+
+    if (record && record.fileUrl) {
+      const filePath = path.join('uploads', record.fileUrl);
+      fs.existsSync(filePath) && fs.unlinkSync(filePath);
+    }
+
+    await MedicalRecord.destroy({ where: { id } });
+
+    res.status(200).json({ status: 'success', message: 'Medical record deleted' });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+};
+
+// Get records for a specific patient
+export const getRecordsByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
 
     const records = await MedicalRecord.findAll({
       where: { patientId },
-      include: [{ model: Patient, attributes: ['id', 'name', 'email'] }],
+      include: [{ model: Doctor, as: 'doctor', attributes: ['firstName', 'lastName'] }],
     });
 
-    if (!records.length) {
-      return res.status(404).json({ message: "No medical records found for this patient." });
-    }
-
-    return res.status(200).json({ data: records });
+    res.status(200).json({ status: 'success', data: records });
   } catch (error) {
-    console.error("Error fetching medical records:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };

@@ -1,23 +1,38 @@
 import express from 'express';
 import {
   bookAppointment,
+  getAllAppointments,
+  getAppointmentById,
   getDoctorAppointments,
   cancelAppointment,
   getAvailableSlots,
+  updateAppointment,
 } from '../controllers/appointmentController.js';
 
 const router = express.Router();
 
-// Route to book an appointment
+// Book an appointment
 router.post('/book', bookAppointment);
 
-// Route to get all appointments for a doctor on a specific date
+// Get ALL appointments
+router.get('/', getAllAppointments);
+
+// Get appointment by ID
+router.get('/:id', getAppointmentById);
+
+// Get all appointments for a doctor on a specific date
 router.get('/doctor/:doctorId/:appointmentDate', getDoctorAppointments);
 
-// Route to cancel an appointment
+// Cancel (or update) an appointment
 router.put('/cancel/:appointmentId', cancelAppointment);
 
-// Route to check available slots
+// Update appointment details (e.g., reschedule)
+router.put('/:id', updateAppointment);
+
+// Delete an appointment
+router.delete('/:id', cancelAppointment);
+
+// Check available slots for a doctor on a specific date
 router.get('/slots/:doctorId/:appointmentDate', getAvailableSlots);
 
 export default router;

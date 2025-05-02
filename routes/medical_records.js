@@ -1,16 +1,34 @@
 import express from 'express';
+import multer from 'multer';
 import {
-  addMedicalRecord,
-  getPatientMedicalRecords,
-  upload, // Import multer upload middleware
+  createMedicalRecord,
+  getAllMedicalRecords,
+  getMedicalRecordById,
+  updateMedicalRecord,
+  deleteMedicalRecord,
+  getRecordsByPatient,
 } from '../controllers/medicalRecordController.js';
 
 const router = express.Router();
 
-// Route to add a new medical record with file upload
-router.post('/add', upload.single('file'), addMedicalRecord);
+// Multer config for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueName = `${Date.now()}-${file.originalname}`;
+    cb(null, uniqueName);
+  },
+});
+const upload = multer({ storage });
 
-// Route to get all medical records for a specific patient
-router.get('/patient/:patientId', getPatientMedicalRecords);
+// Routes
+router.post('/', upload.single('file'), createMedicalRecord);
+router.get('/', getAllMedicalRecords);
+router.get('/:id', getMedicalRecordById);
+router.get('/patient/:patientId', getRecordsByPatient);
+router.put('/:id', upload.single('file'), updateMedicalRecord);
+router.delete('/:id', deleteMedicalRecord);
 
 export default router;
