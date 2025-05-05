@@ -19,6 +19,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: false
     },
+    timeslot: {
+      type: DataTypes.STRING, // e.g., "10:00 AM"
+      allowNull: false,
+    },
     queueNumber: {
       type: DataTypes.INTEGER,
       allowNull: false

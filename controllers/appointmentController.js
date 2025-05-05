@@ -1,30 +1,67 @@
 import { Appointment, Availability, MedicalRecord } from '../models/index.js';
 import { Op } from 'sequelize';
+
 // POST /api/appointments
 // Book an appointment
 export const bookAppointment = async (req, res) => {
   try {
-    const { doctorId, patientId, appointmentDate, timeSlot } = req.body;
+    const { doctorId, patientId, appointmentDate, timeslot } = req.body;
 
-    // Count existing appointments for queue number
-    const appointmentCount = await Appointment.count({
-      where: { doctorId, appointmentDate },
+    // Ensure all required fields are provided
+    if (!doctorId || !patientId || !appointmentDate || !timeslot) {
+      return res.status(400).json({ status: 'error', message: 'Missing required fields.' });
+    }
+    const normalizedDate = new Date(new Date(appointmentDate).toISOString().split('T')[0]);
+
+    // Check if the slot is already booked for the same doctor, date, and timeSlot
+    const existing = await Appointment.findOne({
+      where: {
+        doctorId,
+        appointmentDate: normalizedDate,
+        timeslot
+      }
     });
 
-    const newAppointment = await Appointment.create({
+    if (existing) {
+      const errorMessage = 'Time slot already booked for this doctor on that date.';
+      console.error('Error:', errorMessage);
+
+      return res.status(400).json({
+        status: 'error',
+        message: errorMessage
+      });
+      
+    }
+   
+
+    // Get count for queue number
+    const count = await Appointment.count({
+      where: {
+        doctorId,
+        appointmentDate: normalizedDate
+      }
+    });
+
+    const appointment = await Appointment.create({
       doctorId,
       patientId,
-      appointmentDate,
-      timeSlot,
-      queueNumber: appointmentCount + 1,
-      status: 'Scheduled',
+      appointmentDate: normalizedDate,
+      timeslot,
+      queueNumber: count + 1
     });
 
-    res.status(201).json({ status: 'success', data: newAppointment });
+    res.status(201).json({
+      status: 'success',
+      message: 'Appointment created successfully.',
+      data: appointment
+    });
+
   } catch (error) {
+    console.error('Error booking appointment:', error);
     res.status(500).json({ status: 'error', message: error.message });
   }
 };
+
 
 // Get all appointments
 export const getAllAppointments = async (req, res) => {
@@ -122,30 +159,20 @@ export const cancelAppointment = async (req, res) => {
 // GET /api/appointments/available-slots/:doctorId?date=YYYY-MM-DD
 // Get available slots for a doctor on a specific date
 export const getAvailableSlots = async (req, res) => {
-  try {
-    const { doctorId, appointmentDate } = req.params;
+  const { doctorId, appointmentDate } = req.params;
 
-    const availabilities = await DoctorAvailability.findAll({
-      where: {
-        doctorId,
-        day: new Date(appointmentDate).toLocaleString('en-US', { weekday: 'long' }),
-      },
-    });
+  const allSlots = [
+    '09:00 AM', '10:00 AM', '11:00 AM',
+    '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'
+  ];
 
-    const appointments = await Appointment.findAll({
-      where: {
-        doctorId,
-        appointmentDate,
-      },
-    });
+  const booked = await Appointment.findAll({
+    where: { doctorId, appointmentDate },
+    attributes: ['timeSlot']
+  });
 
-    const bookedSlots = appointments.map((a) => a.timeSlot);
-    const availableSlots = availabilities.filter(
-      (slot) => !bookedSlots.includes(slot.startTime)
-    );
+  const bookedSlots = booked.map(appt => appt.timeSlot);
+  const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
 
-    res.json({ status: 'success', data: availableSlots });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
-  }
+  res.json(availableSlots);
 };
