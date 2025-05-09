@@ -50,6 +50,24 @@ MedicalRecord.belongsTo(Doctor, { foreignKey: 'doctorId' });
 User.hasOne(UserProfile, { foreignKey: 'userId' });
 UserProfile.belongsTo(User, { foreignKey: 'userId' });
 
+const models = {
+  User,
+  Doctor,
+  Specialization,
+  Appointment,
+  Payment,
+  Availability,
+  MedicalRecord,
+  UserProfile,
+  Patient,
+};
+
+
+Object.values(models).forEach((model) => {
+  if (typeof model.associate === 'function') {
+    model.associate(models);
+  }
+});
 
 export { sequelize, User, UserProfile, Doctor, Specialization, Appointment, Payment, Availability, MedicalRecord, Patient };
 export default { sequelize, User, UserProfile, Doctor, Specialization, Appointment, Payment, Availability, MedicalRecord, Patient };

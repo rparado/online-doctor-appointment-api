@@ -1,7 +1,7 @@
 import express from 'express';
 import {
   bookAppointment,
-  getAllAppointments,
+  getAllAppointmentsByPatient,
   getAppointmentById,
   getDoctorAppointments,
   cancelAppointment,
@@ -9,13 +9,15 @@ import {
   updateAppointment,
 } from '../controllers/appointmentController.js';
 
+import {authenticateToken} from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
 
 // Book an appointment
 router.post('/book', bookAppointment);
 
 // Get ALL appointments
-router.get('/', getAllAppointments);
+router.get('/patients', authenticateToken, getAllAppointmentsByPatient);
 
 // Get appointment by ID
 router.get('/:id', getAppointmentById);

@@ -1,4 +1,4 @@
-import { Appointment, Availability, MedicalRecord } from '../models/index.js';
+import { Appointment, Availability, MedicalRecord, User, Doctor, Specialization,UserProfile } from '../models/index.js';
 import { Op } from 'sequelize';
 
 // POST /api/appointments
@@ -64,16 +64,35 @@ export const bookAppointment = async (req, res) => {
 
 
 // Get all appointments
-export const getAllAppointments = async (req, res) => {
+export const getAllAppointmentsByPatient = async (req, res) => {
   try {
     const appointments = await Appointment.findAll({
+      where: { patientId: req.user.id },
       include: [
-        { model: User, as: 'patient', attributes: ['firstName', 'lastName'] },
-        { model: Doctor, include: ['Specialization'] },
+        {
+          model: Doctor,
+          as: 'doctor',
+          attributes: ['id', 'fee', 'biography'],
+          include: [
+            {
+              model: Specialization,
+              attributes: ['name'],
+            },
+            {
+              model: UserProfile,
+              as: 'userProfile',
+              attributes: ['firstName','middleName','phoneNumber', 'lastName'],
+            },
+          ],
+        },
       ],
     });
+    if (!appointments) {
+      return res.status(404).json({ status: 'error', message: 'You have no appointments.' });
+    }
     res.status(200).json({ status: 'success', data: appointments });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ status: 'error', message: error.message });
   }
 };

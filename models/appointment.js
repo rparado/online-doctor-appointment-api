@@ -35,9 +35,10 @@ export default (sequelize, DataTypes) => {
 
 
   (Appointment).associate = (models) => {
-    Appointment.belongsTo(models.User, { as: 'doctor', foreignKey: 'doctorId' });
-    Appointment.belongsTo(models.User, { as: 'patient', foreignKey: 'patientId' });
+    Appointment.belongsTo(models.User, { foreignKey: 'doctorId' });
+    Appointment.belongsTo(models.User, { foreignKey: 'patientId' });
     Appointment.hasOne(models.MedicalRecord, { foreignKey: 'appointmentId' });
+    Appointment.belongsTo(models.Doctor, { as: 'doctor', foreignKey: 'doctorId' });
   };
 
   return Appointment;

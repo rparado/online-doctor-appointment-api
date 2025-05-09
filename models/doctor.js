@@ -13,16 +13,15 @@ export default (sequelize, DataTypes) => {
   // Associations
   Doctor.associate = (models) => {
     Doctor.belongsTo(models.User, { foreignKey: 'userId' }); // Doctor belongs to User
-    models.User.hasOne(models.UserProfile, { foreignKey: 'userId' }); // User has one Profile
     Doctor.belongsTo(models.Specialization, { foreignKey: 'specializationId' }); // Doctor belongs to Specialization
     Doctor.hasMany(models.Availability, { foreignKey: 'doctorId' }); // Doctor has many Availabilities
     Doctor.hasMany(models.Appointment, { foreignKey: 'doctorId' }); // Doctor has many Appointments
     Doctor.hasMany(models.MedicalRecord, { foreignKey: 'doctorId' }); // Doctor has many Medical Records
 
     Doctor.hasOne(models.UserProfile, {
-      sourceKey: 'userId',  // Connect via userId
-      foreignKey: 'userId', // UserProfile also uses userId
-      as: 'userProfile'      // Name the relation
+      sourceKey: 'userId', 
+      foreignKey: 'userId',
+      as: 'userProfile'
     });
   };
 
