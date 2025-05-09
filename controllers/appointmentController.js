@@ -13,7 +13,7 @@ export const bookAppointment = async (req, res) => {
     }
     const normalizedDate = new Date(new Date(appointmentDate).toISOString().split('T')[0]);
 
-    // Check if the slot is already booked for the same doctor, date, and timeSlot
+    // Check if the slot is already booked for the same doctor, date, and timeslot
     const existing = await Appointment.findOne({
       where: {
         doctorId,
@@ -125,7 +125,7 @@ export const getDoctorAppointments = async (req, res) => {
         doctorId,
         appointmentDate,
       },
-      order: [['timeSlot', 'ASC']],
+      order: [['timeslot', 'ASC']],
     });
 
     res.json({ status: 'success', data: appointments });
@@ -138,22 +138,23 @@ export const getDoctorAppointments = async (req, res) => {
 export const updateAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.params;
-    const { appointmentDate, timeSlot, status } = req.body;
+    const { appointmentDate, timeslot, status } = req.body;
 
     const appointment = await Appointment.findByPk(appointmentId);
+
     if (!appointment) {
       return res.status(404).json({ status: 'error', message: 'Appointment not found' });
     }
 
     appointment.appointmentDate = appointmentDate ?? appointment.appointmentDate;
-    appointment.timeSlot = timeSlot ?? appointment.timeSlot;
+    appointment.timeslot = timeslot ?? appointment.timeslot;
     appointment.status = status ?? appointment.status;
 
     await appointment.save();
 
     res.json({ status: 'success', message: 'Appointment updated', data: appointment });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
+    res.status(500).json({ status: 'error', message: 'Appointment not found' });
   }
 };
 // DELETE /api/appointments/:id
@@ -161,13 +162,12 @@ export const updateAppointment = async (req, res) => {
 export const cancelAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.params;
-
     const appointment = await Appointment.findByPk(appointmentId);
     if (!appointment) {
       return res.status(404).json({ status: 'error', message: 'Appointment not found' });
     }
 
-    appointment.status = 'Cancelled';
+    appointment.status = 'cancelled';
     await appointment.save();
 
     res.json({ status: 'success', message: 'Appointment cancelled' });
@@ -187,10 +187,10 @@ export const getAvailableSlots = async (req, res) => {
 
   const booked = await Appointment.findAll({
     where: { doctorId, appointmentDate },
-    attributes: ['timeSlot']
+    attributes: ['timeslot']
   });
 
-  const bookedSlots = booked.map(appt => appt.timeSlot);
+  const bookedSlots = booked.map(appt => appt.timeslot);
   const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
 
   res.json(availableSlots);

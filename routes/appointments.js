@@ -29,7 +29,7 @@ router.get('/doctor/:doctorId/:appointmentDate', getDoctorAppointments);
 router.put('/cancel/:appointmentId', cancelAppointment);
 
 // Update appointment details (e.g., reschedule)
-router.put('/:id', updateAppointment);
+router.put('/change/:appointmentId', updateAppointment);
 
 // Delete an appointment
 router.delete('/:id', cancelAppointment);
