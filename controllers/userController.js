@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/index.js';
+import { User, UserProfile } from '../models/index.js';
 
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -93,5 +93,32 @@ export const loginUser = async (req, res) => {
   } catch (error) {
     console.error('Error in loginUser:', error);
     return res.status(500).json({ status: 'failed', message: 'Server error', error: error.message });
+  }
+};
+
+export const getUserWithProfile = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findByPk(userId, {
+      include: [
+        {
+          model: UserProfile,
+
+        }
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({ status: 'error', message: 'User not found' });
+    }
+
+    return res.json({
+      status: 'success',
+      data: user
+    });
+
+  } catch (error) {
+    return res.status(500).json({ status: 'error', message: error.message });
   }
 };
