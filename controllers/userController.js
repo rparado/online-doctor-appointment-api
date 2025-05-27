@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User, UserProfile } from '../models/index.js';
+import { User, UserProfile, Doctor } from '../models/index.js';
 
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -50,25 +50,29 @@ export const registerUser = async (req, res) => {
 
 // User Login
 export const loginUser = async (req, res) => {
-  try {
+   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ status: 'failed', message: 'Email and password required' });
     }
 
-    // Trim input
     const emailTrimmed = email.trim();
     const passwordTrimmed = password.trim();
 
-    const user = await User.findOne({ where: { email: emailTrimmed } });
+    const user = await User.findOne({
+      where: { email: emailTrimmed },
+      include: [
+        { model: UserProfile, as: 'UserProfile' },
+        { model: Doctor, as: 'Doctor' } // optional if patient may not have Doctor profile
+      ]
+    });
 
     if (!user) {
       return res.status(404).json({ status: 'failed', message: 'User not found' });
     }
 
     const isMatch = await bcrypt.compare(passwordTrimmed, user.password);
-
     if (!isMatch) {
       return res.status(401).json({ status: 'failed', message: 'Invalid email or password' });
     }
@@ -78,16 +82,24 @@ export const loginUser = async (req, res) => {
     user.token = token;
     await user.save();
 
+    // Prepare response data
+    const responseData = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      isProfileUpdated: user.isProfileUpdated,
+      userProfile: user.UserProfile || null,
+    };
+
+    if (user.role === 'doctor') {
+      responseData.doctorProfile = user.Doctor || null;
+    }
+
     return res.status(200).json({
       status: 'success',
-      message: 'Login successful',
+      message: `${user.role.charAt(0).toUpperCase() + user.role.slice(1)} login successful`,
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        isProfileUpdated: user.isProfileUpdated
-      },
+      user: responseData
     });
 
   } catch (error) {
