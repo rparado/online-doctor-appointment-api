@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false
     },
     appointmentDate: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: false
     },
     timeslot: {
@@ -36,7 +36,7 @@ export default (sequelize, DataTypes) => {
 
   (Appointment).associate = (models) => {
     Appointment.belongsTo(models.User, { foreignKey: 'doctorId' });
-    Appointment.belongsTo(models.User, { foreignKey: 'patientId' });
+    Appointment.belongsTo(models.User, { foreignKey: 'patientId', as: 'patient' });
     Appointment.hasOne(models.MedicalRecord, { foreignKey: 'appointmentId' });
     Appointment.belongsTo(models.Doctor, { as: 'doctor', foreignKey: 'doctorId' });
   };

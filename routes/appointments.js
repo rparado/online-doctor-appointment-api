@@ -23,7 +23,7 @@ router.get('/patients', authenticateToken, getAllAppointmentsByPatient);
 router.get('/:id', getAppointmentById);
 
 // Get all appointments for a doctor on a specific date
-router.get('/doctor/:doctorId/:appointmentDate', getDoctorAppointments);
+router.get('/doctor/:appointmentDate',authenticateToken, getDoctorAppointments);
 
 // Cancel (or update) an appointment
 router.put('/cancel/:appointmentId', cancelAppointment);

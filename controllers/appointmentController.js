@@ -118,17 +118,64 @@ export const getAppointmentById = async (req, res) => {
 // Get appointments for a doctor on a specific date
 export const getDoctorAppointments = async (req, res) => {
   try {
-    const { doctorId, appointmentDate } = req.params;
+    const { appointmentDate } = req.params;
+    const parsedDate = new Date(appointmentDate);
+    if (!appointmentDate || isNaN(parsedDate)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid or missing appointment date' });
+    }
+    const humanReadableDate = parsedDate.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    // Ensure user is authenticated and has doctor role
+    const loggedInUserId = req.user?.id;
+    if (!loggedInUserId) {
+      return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+    }
+
+    // Find doctor associated with the logged-in user
+    const doctor = await Doctor.findOne({ where: { userId: loggedInUserId } });
+
+    if (!doctor) {
+      return res.status(404).json({ status: 'error', message: 'Doctor profile not found' });
+    }
 
     const appointments = await Appointment.findAll({
       where: {
-        doctorId,
+        doctorId: doctor.id,
         appointmentDate,
       },
+      include: [
+        {
+          model: User,
+          as: 'patient',
+          attributes: ['email'],
+          include: [
+            {
+              model: UserProfile,
+              as: 'profile',
+              attributes: ['firstName', 'middleName', 'lastName', 'phoneNumber', 'address'],
+              required: false
+            },
+          ],
+        },
+      ],
       order: [['timeslot', 'ASC']],
     });
+    if (!appointments.length) {
+      return res.status(200).json({
+        status: 'success',
+        message: `No appointments on ${humanReadableDate}`,
+      });
+    }
+    return res.status(200).json({
+      status: 'success',
+      message: `Appointments on ${humanReadableDate}`,
+      data: appointments,
+    });
 
-    res.json({ status: 'success', data: appointments });
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
   }
