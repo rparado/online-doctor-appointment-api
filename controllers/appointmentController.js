@@ -86,6 +86,7 @@ export const getAllAppointmentsByPatient = async (req, res) => {
           ],
         },
       ],
+      order: [['appointmentDate', 'DESC'], ['timeslot', 'DESC']],
     });
     if (!appointments) {
       return res.status(404).json({ status: 'error', message: 'You have no appointments.' });
@@ -162,7 +163,7 @@ export const getDoctorAppointments = async (req, res) => {
           ],
         },
       ],
-      order: [['timeslot', 'ASC']],
+      order: [['appointmentDate', 'DESC'], ['timeslot', 'DESC']],
     });
     if (!appointments.length) {
       return res.status(200).json({
