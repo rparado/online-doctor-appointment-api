@@ -7,6 +7,7 @@ import {
   cancelAppointment,
   getAvailableSlots,
   updateAppointment,
+  updateDoctorsAppointment
 } from '../controllers/appointmentController.js';
 
 import {authenticateToken} from '../middlewares/authMiddleware.js';
@@ -36,5 +37,8 @@ router.delete('/:id', cancelAppointment);
 
 // Check available slots for a doctor on a specific date
 router.get('/slots/:doctorId/:appointmentDate', getAvailableSlots);
+
+//change dotor appointment
+router.put('/doctor/change/:appointmentId', updateDoctorsAppointment);
 
 export default router;

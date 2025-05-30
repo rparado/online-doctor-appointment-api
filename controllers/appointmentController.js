@@ -166,13 +166,14 @@ export const getDoctorAppointments = async (req, res) => {
     });
     if (!appointments.length) {
       return res.status(200).json({
-        status: 'success',
-        message: `No appointments on ${humanReadableDate}`,
+        status: 'failed',
+        message: `No appointments on this day ${humanReadableDate}`,
+        data:[]
       });
     }
     return res.status(200).json({
       status: 'success',
-      message: `Appointments on ${humanReadableDate}`,
+      message: `Appointments on this day ${humanReadableDate}`,
       data: appointments,
     });
 
@@ -241,4 +242,26 @@ export const getAvailableSlots = async (req, res) => {
   const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
 
   res.json(availableSlots);
+};
+
+export const updateDoctorsAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const { status, remarks } = req.body;
+
+    const appointment = await Appointment.findByPk(appointmentId);
+
+    if (!appointment) {
+      return res.status(404).json({ status: 'error', message: 'Appointment not found' });
+    }
+
+    appointment.status = status ?? appointment.status;
+    appointment.remarks = remarks ?? appointment.remarks;
+
+    await appointment.save();
+
+    res.json({ status: 'success', message: 'Appointment updated', data: appointment });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: 'Appointment not found' });
+  }
 };

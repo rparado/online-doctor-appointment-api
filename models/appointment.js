@@ -30,6 +30,11 @@ export default (sequelize, DataTypes) => {
     status: {
       type: DataTypes.STRING,
       defaultValue: 'pending'
+    },
+    remarks: {
+       type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: ''
     }
   });
 
