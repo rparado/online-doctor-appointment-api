@@ -60,7 +60,7 @@ export default (sequelize, DataTypes) => {
 
   // Relationships
   UserProfile.associate = (models) => {
-    UserProfile.belongsTo(models.User, { foreignKey: 'userId' });
+    UserProfile.belongsTo(models.User, { foreignKey: 'userId', as:'user' });
   };
 
   return UserProfile;

@@ -1,5 +1,5 @@
 // controllers/doctorController.js
-import { Doctor, UserProfile, Specialization, Availability } from '../models/index.js';
+import { Doctor, UserProfile, Specialization, Availability, Appointment, User } from '../models/index.js';
 
 export const getAllDoctors = async (req, res) => {
   try {
@@ -97,5 +97,57 @@ export const getDoctorDetailById = async (req, res) => {
   } catch (err) {
     console.error('Error getting doctor detail:', err);
     res.status(500).json({ status: 'error', message: 'Server error' });
+  }
+};
+
+export const getDoctorPatients = async (req, res) => {
+  try {
+    // Find doctor by logged-in user ID
+    const doctor = await Doctor.findOne({ where: { userId: req.user.id } });
+
+    if (!doctor) {
+      return res.status(404).json({ message: 'Doctor not found' });
+    }
+
+    // Get appointments for this doctor and include patient details
+    const appointments = await Appointment.findAll({
+      where: { doctorId: doctor.id },
+      include: [
+        {
+          model: User,
+          as: 'patient',
+          attributes: ['id', 'email'],
+          include: [
+            {
+              model: UserProfile,
+              as: 'profile',
+              attributes: ['firstName','middleName' ,'lastName']
+            }
+          ]
+        }
+      ]
+    });
+
+    // Extract unique patients
+    const seen = new Set();
+    const patients = [];
+
+    for (const appt of appointments) {
+      const patient = appt.patient;
+      if (patient && !seen.has(patient.id)) {
+        seen.add(patient.id);
+        patients.push({
+          id: patient.id,
+          email: patient.email,
+          firstName: patient.profile?.firstName,
+          lastName: patient.profile?.lastName
+        });
+      }
+    }
+
+    return res.status(200).json(patients);
+  } catch (err) {
+    console.error('Error fetching patients:', err);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };

@@ -31,7 +31,7 @@ export default (sequelize, DataTypes) => {
  User.associate = (models) => {
   User.hasOne(models.Doctor, { foreignKey: 'userId' }); // One User has one Doctor
   User.hasOne(models.UserProfile, { foreignKey: 'userId', as: 'profile' }); // One User has one Profile
-  User.hasMany(models.Appointment, { foreignKey: 'patientId' }); // One User can have many Appointments
+  User.hasMany(models.Appointment, { foreignKey: 'patientId', as: 'appointments' }); // One User can have many Appointments
   User.hasMany(models.MedicalRecord, { foreignKey: 'patientId' }); // One User can have many Medical Records
   User.hasOne(models.Patient, { foreignKey: 'userId' });
 };

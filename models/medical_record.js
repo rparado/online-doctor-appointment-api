@@ -19,6 +19,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
+    treatment: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     diagnosis: {
       type: DataTypes.TEXT,
       allowNull: true
@@ -34,12 +38,16 @@ export default (sequelize, DataTypes) => {
     file: {
       type: DataTypes.STRING,
       allowNull: true
-    }
+    },
+    followup_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
   });
 
   (MedicalRecord).associate = (models) => {
     MedicalRecord.belongsTo(models.Appointment, { foreignKey: 'appointmentId' });
-    MedicalRecord.belongsTo(models.User, { as: 'doctor', foreignKey: 'doctorId' });
+    MedicalRecord.belongsTo(models.Doctor, { as: 'doctor', foreignKey: 'doctorId' });
     MedicalRecord.belongsTo(models.User, { as: 'patient', foreignKey: 'patientId' });
   };
 

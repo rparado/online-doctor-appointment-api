@@ -6,15 +6,15 @@ import {
   getMedicalRecordById,
   updateMedicalRecord,
   deleteMedicalRecord,
-  getRecordsByPatient,
+  getRecordsByPatient
 } from '../controllers/medicalRecordController.js';
-
+import { authenticateToken } from '../middlewares/authMiddleware.js';
 const router = express.Router();
 
 // Multer config for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    cb(null, 'uploads/medicalRecords/');
   },
   filename: function (req, file, cb) {
     const uniqueName = `${Date.now()}-${file.originalname}`;
@@ -24,7 +24,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Routes
-router.post('/', upload.single('file'), createMedicalRecord);
+router.post('/create',authenticateToken, upload.single('file'), createMedicalRecord);
 router.get('/', getAllMedicalRecords);
 router.get('/:id', getMedicalRecordById);
 router.get('/patient/:patientId', getRecordsByPatient);
