@@ -25,7 +25,7 @@ const upload = multer({ storage });
 
 // Routes
 router.post('/create',authenticateToken, upload.single('file'), createMedicalRecord);
-router.get('/', getAllMedicalRecords);
+router.get('/get-record', authenticateToken,getAllMedicalRecords);
 router.get('/:id', getMedicalRecordById);
 router.get('/patient/:patientId', getRecordsByPatient);
 router.put('/:id', upload.single('file'), updateMedicalRecord);

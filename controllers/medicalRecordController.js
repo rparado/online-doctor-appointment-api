@@ -1,4 +1,4 @@
-import {User, Doctor, MedicalRecord} from '../models/index.js';
+import {User, Doctor, MedicalRecord, UserProfile} from '../models/index.js';
 import { Op } from 'sequelize';
 import fs from 'fs';
 import path from 'path';
@@ -69,13 +69,36 @@ export const createMedicalRecord = async (req, res) => {
 // Get all medical records
 export const getAllMedicalRecords = async (req, res) => {
 	try {
-		const doctorId = req.user.id; 
+
+		const doctor = await Doctor.findOne({ where: { userId: req.user.id } });
+		if (!doctor) return res.status(404).json({ status: 'error', message: 'Doctor not found' });
 
 		const records = await MedicalRecord.findAll({
-			where: { doctorId },
+			where: { doctorId: doctor.id },
 			include: [
-				{ model: User, as: 'patient', attributes: ['firstName', 'lastName'] },
-				{ model: Doctor, as: 'doctor', attributes: ['firstName', 'lastName'] },
+				{
+				model: User,
+				as: 'patient',
+				attributes: ['email'],
+				include: [
+					{
+						model: UserProfile,
+						as: 'profile',
+						attributes: ['firstName', 'middleName','lastName'],
+					},
+				],
+				},
+				{
+				model: Doctor,
+				as: 'doctor',
+				include: [
+					{
+						model: UserProfile,
+						as: 'userProfile',
+						attributes: ['firstName', 'middleName', 'lastName'],
+					},
+				],
+				},
 			],
 		});
 

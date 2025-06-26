@@ -15,6 +15,8 @@ import paymentRoutes from './routes/payments.js';
 //import userProfileRoutes from './routes/user_profile.js';
 import { Doctor, UserProfile, User } from './models/index.js';
 import userProfileRoutes from './routes/userProfileRoutes.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -23,8 +25,12 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Serve uploaded files statically
-app.use('/uploads', express.static('uploads'));
+// Recreate __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/admin', adminRouter);
 app.use('/api/auth', authRoutes);
